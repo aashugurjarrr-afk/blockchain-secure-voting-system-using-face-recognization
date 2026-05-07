@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Secure Voting System</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI';
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 85%;
+            margin: auto;
+            padding: 25px;
+            backdrop-filter: blur(15px);
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+        }
+
+        table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: rgba(0,0,0,0.5);
+        }
+
+        .camera {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .camera img {
+            border-radius: 10px;
+            border: 3px solid white;
+        }
+
+        .vote-section {
+            text-align: center;
+        }
+
+        select {
+            padding: 10px;
+            width: 220px;
+            border-radius: 5px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #00c9a7;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #00b894;
+        }
+
+        .status {
+            font-size: 18px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .detected {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🔐 Blockchain Voting System</h1>
+
+<div class="container">
+
+    <!-- Candidates -->
+    <h2>🗳 Candidates</h2>
+    <table>
+        <tr><th>ID</th><th>Name</th></tr>
+        <tr><td>1</td><td>John Wick</td></tr>
+        <tr><td>2</td><td>Robert</td></tr>
+        <tr><td>3</td><td>Jack</td></tr>
+    </table>
+
+    <!-- Camera -->
+    <div class="camera">
+        <h3>📷 Face Detection</h3>
+        <img src="{{ url_for('video') }}" width="350">
+    </div>
+
+    <!-- Detected User -->
+    <div class="detected" id="detectedUser">
+        👤 Detected: None
+    </div>
+
+    <!-- Voting -->
+    <div class="vote-section">
+        <form id="voteForm">
+            <select name="vote" required>
+                <option value="">-- Select Candidate --</option>
+                <option>John Wick</option>
+                <option>Robert</option>
+                <option>Jack</option>
+            </select><br><br>
+
+            <button class="btn">Scan Face & Vote</button>
+        </form>
+
+        <p class="status" id="status"></p>
+    </div>
+
+    <!-- Buttons -->
+    <center>
+        
+        <button class="btn" onclick="loadResults()">📊 Show Results</button>
+    </center>
+
+    <!-- Chart -->
+    <canvas id="chart" height="100"></canvas>
+
+</div>
+
+<footer>
+    🔐 Face Verified | 🔗 Blockchain Secured | ❌ No Duplicate Voting
+</footer>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- MAIN SCRIPT -->
+<script>
+document.getElementById("voteForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    let formData = new FormData(this);
+
+    document.getElementById("status").innerText = "🔍 Verifying face...";
+
+    fetch("/auto_vote", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.text())
+    .then(data => {
+
+        console.log(data);
+
+        if (data.startsWith("SUCCESS")) {
+
+            let user = data.split(":")[1];
+
+            document.getElementById("detectedUser").innerText =
+                "👤 Detected: " + user;
+
+            document.getElementById("status").innerText =
+                "✅ Vote Successful!";
+
+            document.getElementById("voteForm").reset();
+
+            setTimeout(() => {
+                document.getElementById("status").innerText = "";
+            }, 2000);
+
+        } else {
+            document.getElementById("status").innerText = data;
+        }
+    })
+    .catch(err => {
+        alert("⚠ Server error");
+    });
+});
+
+
+function loadResults() {
+    fetch("/results")
+    .then(res => res.json())
+    .then(data => {
+
+        let labels = Object.keys(data);
+        let values = Object.values(data);
+
+        new Chart(document.getElementById("chart"), {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values
+                }]
+            }
+        });
+    });
+}
+</script>
+
+</body>
+</html>
